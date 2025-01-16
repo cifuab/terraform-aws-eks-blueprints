@@ -28,7 +28,13 @@ provider "helm" {
   }
 }
 
-data "aws_availability_zones" "available" {}
+data "aws_availability_zones" "available" {
+  # Do not include local zones
+  filter {
+    name   = "opt-in-status"
+    values = ["opt-in-not-required"]
+  }
+}
 
 locals {
   name   = basename(path.cwd)
@@ -52,10 +58,10 @@ locals {
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 20.0"
+  version = "~> 20.11"
 
   cluster_name                   = local.name
-  cluster_version                = "1.29"
+  cluster_version                = "1.30"
   cluster_endpoint_public_access = true
 
   # Give the Terraform identity admin access to the cluster
@@ -117,7 +123,7 @@ resource "kubernetes_namespace_v1" "istio_system" {
 
 module "eks_blueprints_addons" {
   source  = "aws-ia/eks-blueprints-addons/aws"
-  version = "~> 1.14"
+  version = "~> 1.16"
 
   cluster_name      = module.eks.cluster_name
   cluster_endpoint  = module.eks.cluster_endpoint
